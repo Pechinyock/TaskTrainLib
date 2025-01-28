@@ -1,5 +1,5 @@
 <Project>
     <PropertyGroup>
-        <BaseIntermediateOutputPath>..\Intermediate\</BaseIntermediateOutputPath>
+        <BaseIntermediateOutputPath>..\Intermediate\TT.External\</BaseIntermediateOutputPath>
     </PropertyGroup>
 </Project>
