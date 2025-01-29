@@ -5,6 +5,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<BaseOutputPath>..\Bin</BaseOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>TT.Core</PackageId>
+		<Version>1.0.2</Version>
+		<Authors>Rj</Authors>
+		<Company>Rj</Company>
 	</PropertyGroup>
 
 </Project>
