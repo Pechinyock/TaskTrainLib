@@ -11,4 +11,6 @@ public interface IStorageProvider
     StroageTypeFlags GetType();
 
     string GetDatabaseVendorName();
+
+    string GetDefautDatabaseName();
 }
