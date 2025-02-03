@@ -6,6 +6,7 @@ namespace TT.Storage.Npgsql;
 public class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 {
     private readonly string _connectionString;
+    private readonly string _defaultPgDatabaseName = "postgres";
 
     public NpgsqlDatabaseUpdater(string connectionString)
     {
@@ -15,24 +16,18 @@ public class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         _connectionString = connectionString;
     }
 
-    public void Downgrade(uint version)
+    public IEnumerable<string> GetMigrationsUpList()
     {
-        throw new NotImplementedException();
+        var filesPath = Path.Combine(AppContext.BaseDirectory, "Migrations", "Up");
+        var queriesPaths = Directory.GetFiles(filesPath);
+        return queriesPaths;
     }
 
-    public uint GetCurrentVersion()
+    public IEnumerable<string> GetMigrationsDownList()
     {
-        throw new NotImplementedException();
-    }
-
-    public IEnumerable<string> GetMigrationList()
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetWorkingDatabaseName()
-    {
-        throw new NotImplementedException();
+        var filesPath = Path.Combine(AppContext.BaseDirectory, "Migrations", "Down");
+        var queriesPaths = Directory.GetFiles(filesPath);
+        return queriesPaths;
     }
 
     public void StepBack()
@@ -45,7 +40,7 @@ public class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         throw new NotImplementedException();
     }
 
-    public void Update(uint version)
+    public void Migrate(uint version)
     {
         throw new NotImplementedException();
     }

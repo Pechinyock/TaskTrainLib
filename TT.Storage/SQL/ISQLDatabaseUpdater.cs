@@ -2,11 +2,9 @@
 
 public interface ISQLDatabaseUpdater
 {
-    IEnumerable<string> GetMigrationList();
-    string GetWorkingDatabaseName();
-    uint GetCurrentVersion();
-    void Update(uint version);
-    void Downgrade(uint version);
+    IEnumerable<string> GetMigrationsUpList();
+    IEnumerable<string> GetMigrationsDownList();
+    void Migrate(uint version);
     void StepForward();
     void StepBack();
 }
