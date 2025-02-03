@@ -1,5 +1,5 @@
 ﻿using Npgsql;
-using TT.Stroage;
+using TT.Storage;
 
 namespace TT.Storage.Npgsql;
 

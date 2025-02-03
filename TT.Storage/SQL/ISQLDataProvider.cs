@@ -1,4 +1,4 @@
-﻿namespace TT.Stroage;
+﻿namespace TT.Storage;
 
 public interface ISQLDataProvider
 {
