@@ -9,14 +9,16 @@ public class NpgsqlDatabaseUpdaterTests
     [Test]
     public void TestDatabaseAccessableTest()
     {
-        var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString) as ISQLDatabaseUpdater;
+        var pgDataProvider = new NpgsqlDataProvider(_connectionString);
+        var pgUpdater = new NpgsqlDatabaseUpdater(pgDataProvider);
         Assert.IsNotNull(pgUpdater);
     }
 
     [Test]
-    public void MigrationListsAvailableTest() 
+    public void MigrationListsAvailableTest()
     {
-        var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString) as ISQLDatabaseUpdater;
+        var pgDataProvider = new NpgsqlDataProvider(_connectionString);
+        var pgUpdater = new NpgsqlDatabaseUpdater(pgDataProvider);
 
         var listUp = pgUpdater.GetMigrationsUpList();
         Assert.IsNotNull(listUp);
@@ -27,5 +29,14 @@ public class NpgsqlDatabaseUpdaterTests
         Assert.IsNotNull(listDown);
         var downElemetsCount = listDown.Count();
         Assert.Less(0, downElemetsCount);
+    }
+
+    [Test]
+    public void InitializeDatabaseTest() 
+    {
+        var pgDataProvider = new NpgsqlDataProvider(_connectionString);
+        var pgUpdater = new NpgsqlDatabaseUpdater(pgDataProvider);
+
+        pgUpdater.Initialize();
     }
 }

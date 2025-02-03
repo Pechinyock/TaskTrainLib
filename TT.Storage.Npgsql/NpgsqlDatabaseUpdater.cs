@@ -3,31 +3,70 @@ using TT.Storage;
 
 namespace TT.Storage.Npgsql;
 
-public class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
+public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 {
-    private readonly string _connectionString;
-    private readonly string _defaultPgDatabaseName = "postgres";
+    private string MigrationFolderName { get { return "Migrations"; } }
+    private string MigrationUpFolderName { get { return "Up"; } }
+    private string MigrationDownFolderName { get { return "Down"; } }
 
-    public NpgsqlDatabaseUpdater(string connectionString)
+    private readonly NpgsqlDataProvider _dataProvider;
+
+    public NpgsqlDatabaseUpdater(NpgsqlDataProvider dataProvider)
     {
-        if (String.IsNullOrEmpty(connectionString))
-            throw new ArgumentNullException(nameof(connectionString));
+        ArgumentNullException.ThrowIfNull(dataProvider, nameof(dataProvider));
+        _dataProvider = dataProvider;
+    }
 
-        _connectionString = connectionString;
+    public void Initialize()
+    {
+        uint initializeQueriesCount = 2;
+        var migrationsPaths = GetMigrationsUpList();
+        if (initializeQueriesCount < migrationsPaths.Count())
+            throw new InvalidOperationException();
+
+        /* sort migrations */
+
+        var filePathFileName = new Dictionary<string, string>();
+
+        foreach (var migrationPath in migrationsPaths) 
+        {
+            var query = File.ReadAllText(migrationPath);
+            if(String.IsNullOrEmpty(query))
+                throw new InvalidOperationException();
+
+        }
     }
 
     public IEnumerable<string> GetMigrationsUpList()
     {
-        var filesPath = Path.Combine(AppContext.BaseDirectory, "Migrations", "Up");
+        var filesPath = Path.Combine(AppContext.BaseDirectory
+            , MigrationFolderName
+            , MigrationUpFolderName
+        );
+
         var queriesPaths = Directory.GetFiles(filesPath);
-        return queriesPaths;
+        var result = new string[queriesPaths.Length];
+        for(int i = 0; i < queriesPaths.Length; ++i)
+        {
+            result[i] = Path.GetFileName(queriesPaths[i]);
+        }
+        return result;
     }
 
     public IEnumerable<string> GetMigrationsDownList()
     {
-        var filesPath = Path.Combine(AppContext.BaseDirectory, "Migrations", "Down");
+        var filesPath = Path.Combine(AppContext.BaseDirectory
+            , MigrationFolderName
+            , MigrationDownFolderName
+        );
+
         var queriesPaths = Directory.GetFiles(filesPath);
-        return queriesPaths;
+        var result = new string[queriesPaths.Length];
+        for (int i = 0; i < queriesPaths.Length; ++i)
+        {
+            result[i] = Path.GetFileName(queriesPaths[i]);
+        }
+        return result;
     }
 
     public void StepBack()
