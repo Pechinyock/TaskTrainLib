@@ -36,7 +36,5 @@ public class NpgsqlDatabaseUpdaterTests
     {
         var pgDataProvider = new NpgsqlDataProvider(_connectionString);
         var pgUpdater = new NpgsqlDatabaseUpdater(pgDataProvider);
-
-        pgUpdater.Initialize();
     }
 }

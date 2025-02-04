@@ -31,4 +31,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\Down\" />
+    <Folder Include="Migrations\Up\" />
+  </ItemGroup>
+
 </Project>

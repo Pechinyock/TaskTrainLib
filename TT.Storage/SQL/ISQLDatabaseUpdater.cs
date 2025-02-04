@@ -2,7 +2,6 @@
 
 public interface ISQLDatabaseUpdater
 {
-    void Initialize();
     IEnumerable<string> GetMigrationsUpList();
     IEnumerable<string> GetMigrationsDownList();
     void Migrate(uint version);
