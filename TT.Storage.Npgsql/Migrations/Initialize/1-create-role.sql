@@ -3,7 +3,7 @@ $create_role$
 begin
    if exists (
       select from pg_catalog.pg_roles
-      where  rolname = 'tt_test_role') then 
+      where rolname = 'tt_test_role') then
 
       raise notice 'role "tt_test_role" already exists. Skipping.';
    else

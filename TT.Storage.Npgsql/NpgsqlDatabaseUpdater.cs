@@ -1,32 +1,36 @@
 ﻿using Npgsql;
+using System.Text;
 
 namespace TT.Storage.Npgsql;
 
 public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
-                                          , IDisposable
 {
     private string MigrationFolderName => "Migrations";
     private string MigrationUpFolderName => "Up";
     private string MigrationDownFolderName => "Down";
-    private string MigrationInitializeBaseName => "Initialize";
+    private string InitializeDatabaseFolderName => "Initialize";
 
     private readonly NpgsqlDataProvider _dataProvider;
 
     public NpgsqlDatabaseUpdater(string connectionString)
     {
-        /* parse connection string if it's not connecting to 'postgres' database
-         * we throws an error - invalid op.
-         */
         _dataProvider = new NpgsqlDataProvider(connectionString);
     }
 
-    public void CheckForUpdates(string databaseName)
+    public bool IsUpdatesAreAvailable()
     {
-        if(String.IsNullOrEmpty(databaseName))
-            throw new ArgumentNullException(nameof(databaseName));
+        if (_dataProvider.GetDatabaseVersion() == 0)
+            return true;
 
-        if (!_dataProvider.IsDatabaseExists(databaseName))
-            Initialize();
+        return false;
+    }
+
+    public uint GetAvailabeUpdatesCount()
+    {
+        if (_dataProvider.GetDatabaseVersion() == 0)
+            return 1;
+
+        return 0;
     }
 
     public IEnumerable<string> GetMigrationsUp()
@@ -61,11 +65,11 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         return result;
     }
 
-    public IEnumerable<string> GetInitializeDatabaseRecipe() 
+    public IEnumerable<string> GetInitializeDatabaseRecipe()
     {
         var filesPath = Path.Combine(AppContext.BaseDirectory
             , MigrationFolderName
-            , MigrationInitializeBaseName
+            , InitializeDatabaseFolderName
         );
 
         var queriesPaths = Directory.GetFiles(filesPath);
@@ -84,15 +88,52 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public void StepForward()
     {
-        throw new NotImplementedException();
+        var currentVersion = _dataProvider.GetDatabaseVersion();
+
+        var upMigrations = GetMigrationsUp().ToArray();
+        if (upMigrations.Length == 0)
+            throw new InvalidOperationException();
+
+        Array.Sort(upMigrations);
+
+        foreach (var up in upMigrations)
+        {
+            var migrationNum = ExtractMigrationNumber(up);
+            if (currentVersion >= migrationNum)
+                continue;
+
+            var migrationPath = BuildFullPathToMigrations(MigrationUpFolderName, up);
+            var query = File.ReadAllText(migrationPath);
+            if (String.IsNullOrEmpty(query))
+                throw new InvalidOperationException();
+
+            _dataProvider.ExecuteNonQuery(query);
+            var newVersion = ++currentVersion;
+            _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {newVersion} where sigle_row = true");
+            break;
+        }
+    }
+
+    public void Initialize()
+    {
+        var migrations = GetInitializeDatabaseRecipe().ToArray();
+
+        Array.Sort(migrations);
+
+        foreach (var migrationFileName in migrations)
+        {
+            var migrationPath = BuildFullPathToMigrations(InitializeDatabaseFolderName, migrationFileName);
+            var query = File.ReadAllText(migrationPath);
+            if (String.IsNullOrEmpty(query))
+                throw new InvalidOperationException();
+
+            _dataProvider.ExecuteNonQuery(query);
+        }
     }
 
     public void Migrate(uint version)
     {
-        throw new NotImplementedException();
     }
-
-    public void Dispose() => _dataProvider.Dispose();
 
     private string BuildFullPathToMigrations(string migrationDirection, string fileName)
     {
@@ -104,20 +145,24 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         return result;
     }
 
-    private void Initialize()
+    private uint ExtractMigrationNumber(string migrationFileName)
     {
-        var migrations = GetInitializeDatabaseRecipe().ToArray();
+        if (String.IsNullOrEmpty(migrationFileName))
+            throw new ArgumentNullException(nameof(migrationFileName));
 
-        Array.Sort(migrations);
-
-        foreach (var migrationFileName in migrations)
+        const char delimeter = '-';
+        var stringBulder = new StringBuilder();
+        foreach (var c in migrationFileName)
         {
-            var migrationPath = BuildFullPathToMigrations(MigrationInitializeBaseName, migrationFileName);
-            var query = File.ReadAllText(migrationPath);
-            if (String.IsNullOrEmpty(query))
-                throw new InvalidOperationException();
+            if (c == delimeter)
+                break;
 
-            _dataProvider.ExecuteNonQuery(query);
+            stringBulder.Append(c);
         }
+        var extractedNumStr = stringBulder.ToString();
+        if (!uint.TryParse(extractedNumStr, out var result))
+            throw new InvalidOperationException($"file: {migrationFileName} has wrong file name format");
+
+        return result;
     }
 }

@@ -8,5 +8,7 @@ public interface ISQLDatabaseUpdater
     void Migrate(uint version);
     void StepForward();
     void StepBack();
-    void CheckForUpdates(string databaseName);
+    bool IsUpdatesAreAvailable();
+    uint GetAvailabeUpdatesCount();
+    void Initialize();
 }

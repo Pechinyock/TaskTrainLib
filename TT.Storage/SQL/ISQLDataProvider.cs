@@ -2,5 +2,4 @@
 
 public interface ISQLDataProvider
 {
-    string WorkingDatabaseName();
 }

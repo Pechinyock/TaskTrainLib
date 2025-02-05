@@ -3,11 +3,8 @@
 namespace TT.Storage.Npgsql;
 
 public sealed class NpgsqlDataProvider : ISQLDataProvider
-                                       , IDisposable
 {
     private readonly string _connectionString;
-    private readonly string _workingDatabaseName;
-    private readonly NpgsqlConnection _connection;
 
     public NpgsqlDataProvider(string connectionString)
     {
@@ -15,10 +12,6 @@ public sealed class NpgsqlDataProvider : ISQLDataProvider
             throw new ArgumentNullException(nameof(connectionString));
 
         _connectionString = connectionString;
-        _connection = new NpgsqlConnection(connectionString);
-        _connection.Open();
-
-        /* parse connection string and fill _workingDatabaseName */
     }
 
     public bool IsDatabaseExists(string dbName)
@@ -26,21 +19,22 @@ public sealed class NpgsqlDataProvider : ISQLDataProvider
         if (String.IsNullOrEmpty(dbName))
             return false;
 
-        var cmdStr = $"select exists(select datname from pg_catalog.pg_database where lower(datname) = lower('{dbName}'));";
-
         bool result = false;
-
-        using (var cmd = new NpgsqlCommand())
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
-            cmd.Connection = _connection;
-            cmd.CommandText = cmdStr;
-            var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            connection.Open();
+            using (var cmd = new NpgsqlCommand())
             {
-                result = (bool)reader["exists"];
+                cmd.Connection = connection;
+                cmd.CommandText = $"select exists(select datname from pg_catalog.pg_database where lower(datname) = lower('{dbName}'));";
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    result = (bool)reader["exists"];
+                }
             }
+            return result;
         }
-        return result;
     }
 
     public void ExecuteNonQuery(string sqlText)
@@ -48,15 +42,39 @@ public sealed class NpgsqlDataProvider : ISQLDataProvider
         if (String.IsNullOrEmpty(sqlText))
             return;
 
-        using (var cmd = new NpgsqlCommand())
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
-            cmd.Connection = _connection;
-            cmd.CommandText = sqlText;
-            cmd.ExecuteNonQuery();
+            connection.Open();
+            using (var cmd = new NpgsqlCommand())
+            {
+                cmd.Connection = connection;
+                cmd.CommandText = sqlText;
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 
-    public string WorkingDatabaseName() => _workingDatabaseName;
+    public uint GetDatabaseVersion() 
+    {
+        bool isMetadataTableExists = false;
 
-    public void Dispose() => _connection.Dispose();
+        using (var connection = new NpgsqlConnection(_connectionString)) 
+        {
+            connection.Open();
+            using (var cmd = new NpgsqlCommand()) 
+            {
+                cmd.Connection = connection;
+                cmd.CommandText = "select exists (select from information_schema.tables where table_schema = 'public' and table_name = 'database_metainfo');";
+                var reader = cmd.ExecuteReader();
+                while (reader.Read()) 
+                {
+                    isMetadataTableExists = (bool)reader["exists"];
+                }
+            }
+        }
+        if (!isMetadataTableExists)
+            return 0;
+
+        return 0;
+    }
 }

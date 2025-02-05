@@ -25,6 +25,7 @@ public class NpgsqlDatabaseUpdaterTests
 
         var listDown = pgUpdater.GetMigrationsDown();
         Assert.IsNotNull(listDown);
+
         var downElemetsCount = listDown.Count();
         Assert.Less(0, downElemetsCount);
     }
@@ -33,6 +34,14 @@ public class NpgsqlDatabaseUpdaterTests
     public void InitializeDatabaseTest() 
     {
         var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString);
-        pgUpdater.CheckForUpdates("tt_test_base");
+        pgUpdater.Initialize();
+    }
+
+    [Test]
+    public void StepForwardTest() 
+    {
+        var connectoionString = "Server=localhost;Port=11100;Database=tt_test_base;Username=tt_test_role;Password=qwerty12345;Pooling=true;Maximum Pool Size=10;Timeout=10;";
+        var pgUpdater = new NpgsqlDatabaseUpdater(connectoionString);
+        pgUpdater.StepForward();
     }
 }
