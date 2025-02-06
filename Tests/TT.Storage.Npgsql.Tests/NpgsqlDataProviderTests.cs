@@ -21,4 +21,12 @@ public class NpgsqlDataProviderTests
         result = dataprovider.IsDatabaseExists("fdfqwr");
         Assert.IsFalse(result);
     }
+
+    [Test]
+    public void GetDatabaseVersionTest() 
+    {
+        var connectoionString = "Server=localhost;Port=11100;Database=tt_test_base;Username=tt_test_role;Password=qwerty12345;Pooling=true;Maximum Pool Size=10;Timeout=10;";
+        var provider = new NpgsqlDataProvider(connectoionString);
+        var version = provider.GetDatabaseVersion();
+    }
 }

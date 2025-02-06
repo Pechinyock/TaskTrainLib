@@ -54,11 +54,8 @@ public sealed class NpgsqlDataProvider : ISQLDataProvider
         }
     }
 
-    public int GetDatabaseVersion(string databaseName)
+    public int GetDatabaseVersion()
     {
-        if(String.IsNullOrEmpty(databaseName))
-            throw new ArgumentNullException(nameof(databaseName));
-
         int result = 0;
 
         using (var connection = new NpgsqlConnection(_connectionString))

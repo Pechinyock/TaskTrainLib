@@ -28,20 +28,20 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public bool IsUpdatesAreAvailable()
     {
-        if (_dataProvider.GetDatabaseVersion(WorkingDbName) == 0)
+        if (_dataProvider.GetDatabaseVersion() == 0)
             return true;
 
         return false;
     }
 
-    public bool IsDatabaseInitialized(string dbName) 
+    public bool IsDatabaseInitialized(string dbName)
     {
         return _dataProvider.IsDatabaseExists(dbName);
     }
 
     public uint GetAvailabeUpdatesCount()
     {
-        if (_dataProvider.GetDatabaseVersion(WorkingDbName) == 0)
+        if (_dataProvider.GetDatabaseVersion() == 0)
             return 1;
 
         return 0;
@@ -97,7 +97,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public void StepBack()
     {
-        var currentVersion = _dataProvider.GetDatabaseVersion(WorkingDbName);
+        var currentVersion = _dataProvider.GetDatabaseVersion();
         if (currentVersion <= 0)
             return;
 
@@ -107,50 +107,43 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
         Array.Sort(downMigrations);
 
-        foreach (var down in downMigrations)
-        {
-            var migrationNum = ExtractMigrationNumber(down);
+        var previousVersion = --currentVersion;
+        var targetMigration = downMigrations[previousVersion];
+        var migrationPath = BuildFullPathToMigrations(MigrationDownFolderName, targetMigration);
 
-            var migrationPath = BuildFullPathToMigrations(MigrationDownFolderName, down);
-            var query = File.ReadAllText(migrationPath);
-            if (String.IsNullOrEmpty(query))
-                throw new InvalidOperationException();
+        var query = File.ReadAllText(migrationPath);
+        if (String.IsNullOrEmpty(query))
+            throw new InvalidOperationException();
 
-            _dataProvider.ExecuteNonQuery(query);
-            var newVersion = --currentVersion;
-            if(newVersion > 0)
-                _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {newVersion} where sigle_row = true");
-
-            break;
-        }
+        _dataProvider.ExecuteNonQuery(query);
+        if (previousVersion > 0)
+            _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {previousVersion} where sigle_row = true");
     }
 
     public void StepForward()
     {
-        var currentVersion = _dataProvider.GetDatabaseVersion(WorkingDbName);
+        var currentVersion = _dataProvider.GetDatabaseVersion();
 
         var upMigrations = GetMigrationsUp().ToArray();
         if (upMigrations.Length == 0)
             throw new InvalidOperationException();
 
+        if (upMigrations.Length < currentVersion)
+            return;
+
         Array.Sort(upMigrations);
 
-        foreach (var up in upMigrations)
-        {
-            var migrationNum = ExtractMigrationNumber(up);
-            if (currentVersion >= migrationNum)
-                continue;
+        var targetMigration = upMigrations[currentVersion];
 
-            var migrationPath = BuildFullPathToMigrations(MigrationUpFolderName, up);
-            var query = File.ReadAllText(migrationPath);
-            if (String.IsNullOrEmpty(query))
-                throw new InvalidOperationException();
+        var migrationPath = BuildFullPathToMigrations(MigrationUpFolderName, targetMigration);
+        var query = File.ReadAllText(migrationPath);
+        if (String.IsNullOrEmpty(query))
+            throw new InvalidOperationException();
 
-            _dataProvider.ExecuteNonQuery(query);
-            var newVersion = ++currentVersion;
-            _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {newVersion} where sigle_row = true");
-            break;
-        }
+        _dataProvider.ExecuteNonQuery(query);
+        var newVersion = ++currentVersion;
+        _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {newVersion} where sigle_row = true");
+
     }
 
     public void Initialize()

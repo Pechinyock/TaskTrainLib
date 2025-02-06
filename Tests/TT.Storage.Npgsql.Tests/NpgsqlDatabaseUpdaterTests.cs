@@ -6,14 +6,14 @@ public class NpgsqlDatabaseUpdaterTests
 {
     private readonly string _connectionString = "Server=localhost;Port=11100;Database=postgres;Username=postgres;Password=qwerty12345;Pooling=true;Maximum Pool Size=10;Timeout=10;";
 
-    [Test]
+    [Test, Order(1)]
     public void TestDatabaseAccessableTest()
     {
         var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString, AppContext.BaseDirectory);
         Assert.IsNotNull(pgUpdater);
     }
 
-    [Test]
+    [Test, Order(2)]
     public void MigrationListsAvailableTest()
     {
         var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString, AppContext.BaseDirectory);
@@ -30,14 +30,14 @@ public class NpgsqlDatabaseUpdaterTests
         Assert.Less(0, downElemetsCount);
     }
 
-    [Test]
+    [Test, Order(3)]
     public void InitializeDatabaseTest() 
     {
         var pgUpdater = new NpgsqlDatabaseUpdater(_connectionString, AppContext.BaseDirectory);
         pgUpdater.Initialize();
     }
 
-    [Test]
+    [Test, Order(4)]
     public void StepForwardTest() 
     {
         var connectoionString = "Server=localhost;Port=11100;Database=tt_test_base;Username=tt_test_role;Password=qwerty12345;Pooling=true;Maximum Pool Size=10;Timeout=10;";
@@ -45,7 +45,7 @@ public class NpgsqlDatabaseUpdaterTests
         pgUpdater.StepForward();
     }
 
-    [Test]
+    [Test, Order(5)]
     public void StepBackTest()
     {
         var connectoionString = "Server=localhost;Port=11100;Database=tt_test_base;Username=tt_test_role;Password=qwerty12345;Pooling=true;Maximum Pool Size=10;Timeout=10;";
