@@ -54,27 +54,50 @@ public sealed class NpgsqlDataProvider : ISQLDataProvider
         }
     }
 
-    public uint GetDatabaseVersion() 
+    public int GetDatabaseVersion(string databaseName)
     {
-        bool isMetadataTableExists = false;
+        if(String.IsNullOrEmpty(databaseName))
+            throw new ArgumentNullException(nameof(databaseName));
 
-        using (var connection = new NpgsqlConnection(_connectionString)) 
+        int result = 0;
+
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
             connection.Open();
-            using (var cmd = new NpgsqlCommand()) 
+            bool isMetadataTableExists = false;
+            using (var cmd = new NpgsqlCommand())
             {
                 cmd.Connection = connection;
-                cmd.CommandText = "select exists (select from information_schema.tables where table_schema = 'public' and table_name = 'database_metainfo');";
+                cmd.CommandText = $"select exists (select from information_schema.tables where table_schema = 'public' and table_name = 'database_metainfo');";
                 var reader = cmd.ExecuteReader();
-                while (reader.Read()) 
+                while (reader.Read())
                 {
                     isMetadataTableExists = (bool)reader["exists"];
                 }
             }
-        }
-        if (!isMetadataTableExists)
-            return 0;
+            if (!isMetadataTableExists)
+                return result;
 
-        return 0;
+            connection.Close();
+        }
+
+        using (var connection = new NpgsqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var cmd = new NpgsqlCommand())
+            {
+                cmd.Connection = connection;
+                var columnName = "database_version";
+                cmd.CommandText = $"select {columnName} from database_metainfo";
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    result = (int)reader[$"{columnName}"];
+                }
+            }
+            connection.Close();
+        }
+
+        return result;
     }
 }

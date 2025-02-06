@@ -9,6 +9,7 @@ public interface ISQLDatabaseUpdater
     void StepForward();
     void StepBack();
     bool IsUpdatesAreAvailable();
+    bool IsDatabaseInitialized(string dbName);
     uint GetAvailabeUpdatesCount();
     void Initialize();
 }

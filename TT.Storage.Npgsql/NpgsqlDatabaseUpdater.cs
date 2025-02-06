@@ -5,29 +5,43 @@ namespace TT.Storage.Npgsql;
 
 public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 {
+    public readonly string _pathToMigrationFolder;
+
     private string MigrationFolderName => "Migrations";
     private string MigrationUpFolderName => "Up";
     private string MigrationDownFolderName => "Down";
     private string InitializeDatabaseFolderName => "Initialize";
+    private string WorkingDbName;
 
     private readonly NpgsqlDataProvider _dataProvider;
 
-    public NpgsqlDatabaseUpdater(string connectionString)
+    public NpgsqlDatabaseUpdater(string connectionString, string pathToMigrationFolder)
     {
+        if (String.IsNullOrEmpty(pathToMigrationFolder))
+            throw new ArgumentNullException(nameof(pathToMigrationFolder));
+
+        _pathToMigrationFolder = pathToMigrationFolder;
         _dataProvider = new NpgsqlDataProvider(connectionString);
+        NpgsqlConnectionParameters.Parse(connectionString, out var connectionParams);
+        WorkingDbName = connectionParams.Database;
     }
 
     public bool IsUpdatesAreAvailable()
     {
-        if (_dataProvider.GetDatabaseVersion() == 0)
+        if (_dataProvider.GetDatabaseVersion(WorkingDbName) == 0)
             return true;
 
         return false;
     }
 
+    public bool IsDatabaseInitialized(string dbName) 
+    {
+        return _dataProvider.IsDatabaseExists(dbName);
+    }
+
     public uint GetAvailabeUpdatesCount()
     {
-        if (_dataProvider.GetDatabaseVersion() == 0)
+        if (_dataProvider.GetDatabaseVersion(WorkingDbName) == 0)
             return 1;
 
         return 0;
@@ -35,7 +49,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public IEnumerable<string> GetMigrationsUp()
     {
-        var filesPath = Path.Combine(AppContext.BaseDirectory
+        var filesPath = Path.Combine(_pathToMigrationFolder
             , MigrationFolderName
             , MigrationUpFolderName
         );
@@ -51,7 +65,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public IEnumerable<string> GetMigrationsDown()
     {
-        var filesPath = Path.Combine(AppContext.BaseDirectory
+        var filesPath = Path.Combine(_pathToMigrationFolder
             , MigrationFolderName
             , MigrationDownFolderName
         );
@@ -67,7 +81,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public IEnumerable<string> GetInitializeDatabaseRecipe()
     {
-        var filesPath = Path.Combine(AppContext.BaseDirectory
+        var filesPath = Path.Combine(_pathToMigrationFolder
             , MigrationFolderName
             , InitializeDatabaseFolderName
         );
@@ -83,12 +97,37 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public void StepBack()
     {
-        throw new NotImplementedException();
+        var currentVersion = _dataProvider.GetDatabaseVersion(WorkingDbName);
+        if (currentVersion <= 0)
+            return;
+
+        var downMigrations = GetMigrationsDown().ToArray();
+        if (downMigrations.Length == 0)
+            throw new InvalidOperationException();
+
+        Array.Sort(downMigrations);
+
+        foreach (var down in downMigrations)
+        {
+            var migrationNum = ExtractMigrationNumber(down);
+
+            var migrationPath = BuildFullPathToMigrations(MigrationDownFolderName, down);
+            var query = File.ReadAllText(migrationPath);
+            if (String.IsNullOrEmpty(query))
+                throw new InvalidOperationException();
+
+            _dataProvider.ExecuteNonQuery(query);
+            var newVersion = --currentVersion;
+            if(newVersion > 0)
+                _dataProvider.ExecuteNonQuery($"update database_metainfo set database_version = {newVersion} where sigle_row = true");
+
+            break;
+        }
     }
 
     public void StepForward()
     {
-        var currentVersion = _dataProvider.GetDatabaseVersion();
+        var currentVersion = _dataProvider.GetDatabaseVersion(WorkingDbName);
 
         var upMigrations = GetMigrationsUp().ToArray();
         if (upMigrations.Length == 0)
@@ -137,7 +176,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     private string BuildFullPathToMigrations(string migrationDirection, string fileName)
     {
-        var result = Path.Combine(AppContext.BaseDirectory
+        var result = Path.Combine(_pathToMigrationFolder
             , MigrationFolderName
             , migrationDirection
             , fileName
