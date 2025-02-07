@@ -128,7 +128,7 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         if (upMigrations.Length == 0)
             throw new InvalidOperationException();
 
-        if (upMigrations.Length < currentVersion)
+        if (upMigrations.Length <= currentVersion)
             return;
 
         Array.Sort(upMigrations);
