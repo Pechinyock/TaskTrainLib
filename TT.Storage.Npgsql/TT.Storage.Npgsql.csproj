@@ -6,7 +6,7 @@
 	  <BaseOutputPath>..\Bin</BaseOutputPath>
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <PackageId>TT.Storage.Npgsql</PackageId>
-	  <Version>1.0.8</Version>
+	  <Version>1.0.10</Version>
 	  <Authors>Rj</Authors>
 	  <Company>Rj</Company>
   </PropertyGroup>
@@ -36,5 +36,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
+	
+  <ItemGroup>
+    <InternalsVisibleTo Include="TT.Storage.Npgsql.Tests" />
+  </ItemGroup>
+	
 </Project>

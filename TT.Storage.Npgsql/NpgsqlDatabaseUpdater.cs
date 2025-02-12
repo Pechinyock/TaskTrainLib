@@ -1,5 +1,4 @@
-﻿using Npgsql;
-using System.Text;
+﻿using System.Text;
 
 namespace TT.Storage.Npgsql;
 
@@ -26,25 +25,9 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
         WorkingDbName = connectionParams.Database;
     }
 
-    public bool IsUpdatesAreAvailable()
-    {
-        if (_dataProvider.GetDatabaseVersion() == 0)
-            return true;
-
-        return false;
-    }
-
     public bool IsDatabaseInitialized(string dbName)
     {
         return _dataProvider.IsDatabaseExists(dbName);
-    }
-
-    public uint GetAvailabeUpdatesCount()
-    {
-        if (_dataProvider.GetDatabaseVersion() == 0)
-            return 1;
-
-        return 0;
     }
 
     public IEnumerable<string> GetMigrationsUp()
@@ -148,8 +131,11 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
     public void Initialize()
     {
-        var migrations = GetInitializeDatabaseRecipe().ToArray();
+        var currentVersion = _dataProvider.GetDatabaseVersion();
+        if (currentVersion > 0)
+            return;
 
+        var migrations = GetInitializeDatabaseRecipe().ToArray();
         Array.Sort(migrations);
 
         foreach (var migrationFileName in migrations)
@@ -161,10 +147,6 @@ public sealed class NpgsqlDatabaseUpdater : ISQLDatabaseUpdater
 
             _dataProvider.ExecuteNonQuery(query);
         }
-    }
-
-    public void Migrate(uint version)
-    {
     }
 
     private string BuildFullPathToMigrations(string migrationDirection, string fileName)
