@@ -6,3 +6,9 @@ public enum AccessLevelEnum
     Admin = 1,
     Owner = 2
 }
+
+public enum ExchangeTypeEnum
+{
+    Fanout = 0,
+    Direct = 1,
+}

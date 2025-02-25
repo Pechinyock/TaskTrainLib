@@ -6,13 +6,17 @@
 		<BaseOutputPath>..\Bin</BaseOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>TT.Core</PackageId>
-		<Version>1.0.9</Version>
+		<Version>1.0.13</Version>
 		<Authors>Rj</Authors>
 		<Company>Rj</Company>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.3.1" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.5.0" />
+	  <PackageReference Include="RabbitMQ.Client" Version="7.1.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
 	</ItemGroup>
 
 </Project>
