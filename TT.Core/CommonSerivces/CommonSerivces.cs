@@ -52,4 +52,34 @@ public static class CommonSerivces
 
         return services;
     }
+
+    public static IServiceCollection AddRabbitMQPublisher(this IServiceCollection services, string host) 
+    {
+        if(String.IsNullOrEmpty(host))
+            throw new ArgumentNullException(nameof(host));
+
+        services.AddSingleton<IMessagePublisher, RabbitMQPublisher>();
+        services.Configure<RabbitMQPublisherOptions>(options =>
+        {
+            options.Host = host;
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddRabbitMQSubscriber(this IServiceCollection services
+        , string host
+        , ExchangeInfo exchangeInfo
+        , Action<byte[]> onMessageReceived) 
+    {
+        services.AddHostedService<RabbitMQSubscriber>();
+        services.Configure<RabbitMQSubscriberOptions>(options =>
+        {
+            options.Host = host;
+            options.ExchangeName = exchangeInfo.Name;
+            options.ExchangeType = exchangeInfo.ExchangeType;
+            options.OnMessageRecived = onMessageReceived;
+        });
+
+        return services;
+    }
 }

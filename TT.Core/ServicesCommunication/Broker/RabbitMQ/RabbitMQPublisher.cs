@@ -29,9 +29,16 @@ public class RabbitMQPublisher : IMessagePublisher, IDisposable
         await _channel.BasicPublishAsync(exchange, routingKey, body);
     }
 
+    public async Task Send(ExchangeInfo envelope, ReadOnlyMemory<byte> body)
+    {
+        await _channel.ExchangeDeclareAsync(envelope.Name, RabbitMQUtils.GetExchangeType(envelope.ExchangeType));
+        await _channel.BasicPublishAsync(envelope.Name, envelope.RoutingKey, body);
+    }
+
     public void Dispose()
     {
         _connection?.Dispose();
         _channel?.Dispose();
     }
+
 }
