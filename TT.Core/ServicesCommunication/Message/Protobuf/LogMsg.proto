@@ -1,0 +1,20 @@
+﻿syntax = "proto3";
+
+package TT.Core;
+
+import "google/protobuf/timestamp.proto";
+
+message LogMessage
+{
+	enum LevelEnum
+	{
+		Trace = 0;
+		Info = 1;
+		Warn = 2;
+		Error = 3;
+	}
+
+	LevelEnum Level = 1;
+	string Description = 2;
+	google.protobuf.Timestamp TimeStamp = 3;
+}

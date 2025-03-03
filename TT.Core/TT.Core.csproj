@@ -6,17 +6,22 @@
 		<BaseOutputPath>..\Bin</BaseOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>TT.Core</PackageId>
-		<Version>1.0.14</Version>
+		<Version>1.0.15</Version>
 		<Authors>Rj</Authors>
 		<Company>Rj</Company>
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Google.Protobuf" Version="3.29.3" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
 	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
 	  <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.5.0" />
 	  <PackageReference Include="RabbitMQ.Client" Version="7.1.0" />
 	  <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ServicesCommunication\Message\ProtoOut\" />
 	</ItemGroup>
 
 </Project>
